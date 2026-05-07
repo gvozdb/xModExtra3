@@ -1,0 +1,26 @@
+# IDE / editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# MODX local config
+config.core.php
+
+# Build artefacts
+_build/source/
+_build/node_modules/
+*.transport.zip
+
+# Deps
+vendor/
+node_modules/
+
+# Logs / temp
+*.log
+*.bak
+*.tmp
