@@ -15,8 +15,12 @@
 use xPDO\Transport\xPDOTransport;
 use xPDO\xPDO;
 
-define('COMPONENT_NAME', 'xmodextra3');
-define('COMPONENT_VEHICLE_CLASS', 'xModExtra3\\Transport\\EncryptedVehicle');
+// Resolver is included in the package twice (once via setupEncryption()
+// for install order, once via finalizeEncryption() for reverse-order
+// uninstall). Both fire in the same PHP process on install — guard the
+// define()s to avoid "Constant already defined" warnings.
+defined('COMPONENT_NAME') || define('COMPONENT_NAME', 'xmodextra3');
+defined('COMPONENT_VEHICLE_CLASS') || define('COMPONENT_VEHICLE_CLASS', 'xModExtra3\\Transport\\EncryptedVehicle');
 
 $success = true;
 
