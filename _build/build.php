@@ -188,6 +188,28 @@ class xModExtra3Package
             return;
         }
 
+        // Build-time guard: EncryptedVehicle.php must exist before we ask
+        // modstore.pro for a key. Otherwise we'd hit a fatal
+        // "require_once: Failed to open stream" later on. Common cause —
+        // the file was lost when the component was cloned from xModExtra3
+        // (or its `src/Transport/` subtree was removed).
+        $vehicleFile = $this->config['core'] . 'src/Transport/EncryptedVehicle.php';
+        if (!is_file($vehicleFile)) {
+            $this->modx->log(
+                modX::LOG_LEVEL_ERROR,
+                'Encryption enabled but EncryptedVehicle class file is missing: ' . $vehicleFile
+                . '. Copy it from xModExtra3 (and replace the `xModExtra3` namespace inside with this component\'s namespace), or set encrypt=false in _build/config.inc.php.'
+            );
+            return;
+        }
+
+        // CLI builds have no HTTP session, but modTransportProvider::prepareRequestArgs()
+        // dereferences $_SESSION unconditionally → "Undefined global variable $_SESSION"
+        // warning in error log. Pre-seed an empty array to silence it.
+        if (!isset($_SESSION)) {
+            $_SESSION = [];
+        }
+
         $this->modx->log(modX::LOG_LEVEL_INFO, 'Encryption enabled, requesting key from modstore.pro...');
 
         /** @var modTransportProvider $provider */
@@ -248,13 +270,13 @@ class xModExtra3Package
         }
 
         // Load the class locally so createVehicle(...) can instantiate it during build.
-        require_once $this->config['core'] . 'src/Transport/EncryptedVehicle.php';
+        require_once $vehicleFile;
 
         // Step 1: Add EncryptedVehicle.php as a plain file vehicle (not encrypted).
         // UNINSTALL_FILES = false so the class stays available during decryption on uninstall.
         $this->builder->package->put(
             [
-                'source' => $this->config['core'] . 'src/Transport/EncryptedVehicle.php',
+                'source' => $vehicleFile,
                 'target' => "return MODX_CORE_PATH . 'components/" . $this->config['name_lower'] . "/src/Transport/';",
             ],
             [
