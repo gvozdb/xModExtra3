@@ -230,6 +230,20 @@ class EncryptedVehicle extends xPDOObjectVehicle
      */
     protected function getDecodeKey(&$transport, $action)
     {
+        // Same-process build + install (dev workflow with install=true in
+        // _build/config.inc.php): setupEncryption() already received the key
+        // from modstore.pro and stored it in PKG_ENCODE_KEY. AES-256-CBC is
+        // symmetric, so encode key === decode key — reuse it directly and
+        // skip the API call. On a real production install PKG_ENCODE_KEY is
+        // never defined → falls through to the provider-based path below.
+        if (defined('PKG_ENCODE_KEY') && PKG_ENCODE_KEY) {
+            $transport->xpdo->log(
+                xPDO::LOG_LEVEL_INFO,
+                'Using in-process PKG_ENCODE_KEY (same-process build+install)'
+            );
+            return (string) PKG_ENCODE_KEY;
+        }
+
         $key = false;
         $endpoint = 'package/decode/' . $action;
 
